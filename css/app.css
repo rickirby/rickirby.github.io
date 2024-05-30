@@ -75,6 +75,23 @@ body::-webkit-scrollbar {
     animation-iteration-count: infinite;
 }
 
+.video-container {
+    position: relative;
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    padding-top: 25px;
+    height: 0;
+    margin: 10px; /* 20px padding from edge */
+}
+
+.video-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: calc(100% - 20px); /* Full width minus 10px padding on each side */
+    height: calc(100% - 20px); /* Full height minus 10px padding on each side */
+    margin: 10px; /* Center the video within the container */
+}
+
 @keyframes scroll {
     0% {
         opacity: 0;
