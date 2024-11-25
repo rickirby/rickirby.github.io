@@ -1,0 +1,22 @@
+# Node.js dependencies
+node_modules/
+
+# VitePress build output
+.vitepress/dist/
+.vitepress/cache
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local development environment files
+.vscode/
+.DS_Store
+
+# Mac specific
+*.DS_Store
+
+# Environment variables
+.env
+.env.*.local

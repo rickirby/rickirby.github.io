@@ -1,0 +1,40 @@
+:root:not(.dark) .dark-only {
+    display: none;
+}
+  
+:root:is(.dark) .light-only {
+    display: none;
+}
+
+details.item-details summary {
+    cursor: pointer;
+    margin-top: 4px;
+    margin-bottom: 4px;
+    margin-left: 8px;
+}
+  
+details.item-details[open] {
+    margin-bottom: 8px;
+}
+  
+details.item-details p {
+    margin-top: 4px;
+    margin-left: 36px;
+}
+
+.rounded-button {
+    background-color: #b6b6b649;
+    padding-top: 8px;
+    padding-left: 16px;
+    padding-right: 16px;
+    padding-bottom: 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: center;
+    display: inline-block;
+    transition: background-color 0.3s;
+}
+  
+.rounded-button:hover {
+    background-color: #72727249;
+}
