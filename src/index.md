@@ -4,7 +4,7 @@ layout: home
 
 hero:
   name: "Ricki Bin Yamin"
-  text: "iOS Software Engineer"
+  text: "Sr. iOS Software Engineer"
   tagline: Stockbit | Ex-Traveloka | Ex-DANA
   image:
     src: /assets/profile/profile-photo.png

@@ -4,7 +4,7 @@ import markdownItContainer from 'markdown-it-container'
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
   title: "Ricki Bin Yamin",
-  description: "iOS Engineer at Stockbit | Ex-Traveloka | Ex-DANA",
+  description: "Sr. iOS Engineer at Stockbit | Ex-Traveloka | Ex-DANA",
   srcDir: './src',
   head: [
     ['link', { rel: 'icon', type: 'image/png', href: '/assets/profile/profile-photo.png' }],
