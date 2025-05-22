@@ -26,3 +26,7 @@ I implement `CoreData` to save page-scanner result, then sync the storage to the
 ### Github
 Check it out this Xcode project on my Github Profile here:
 https://github.com/rickirby/scandocs
+
+### Medium Page
+I also write the modularization revisit process on my medium article here:
+https://medium.com/@rickirby/revisit-my-old-code-e6cb55fd1848 
