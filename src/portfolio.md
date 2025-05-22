@@ -93,13 +93,20 @@ To make the early step easier, I create a shell script to cut off the `developme
 
 #### ⚙️ iOS Core Stuff
 ::: item-details `OneSignal` to `FCM` Migration (Save USD 20,000 per Year)
-
+We migrate Push Notification Services from `OneSignal` to `Firebase Cloud Messaging` and we can cut the subscribtion fee for about USD 20,000/year.<br><br>
+OneSignal charges USD 3 for every 1000 subscribers. And from our last bill for Nov 2022 - Oct 2023, we should pay arround USD 25K. But, Firebase Cloud Messaging service is free, as we can see on the Firebase pricing web page.<br><br>
+![PN Migration](/assets/portfolio/port_sb_pn_migration_logo.png)
 :::
 ::: item-details Modularization Enhancement to Cut Build Time up to 50%
-
+Building a complex apps like Stockbit can take up to 6 minutes. But with the correct optimization of the modularization, we can cut it for almost 50% build time.<br><br>
+![Build Time Final](/assets/portfolio/port_sb_build_time_final_result.png)<br>
+[See Details](/portfolio/stockbit/build_time_optimization){.rounded-button target="_blank"}<br><br>
 :::
 ::: item-details Implementation of Live Update Remote Config
-
+Firebase introduced a new API, **Real-Time Remote Config**, starting from version `10.7.0`. This new API allow us to receive updated parameter keys and values as soon as they’re published on the server without waiting the user to re-open the apps. Here are the comparison between before and after applying Real-Time updates for Remote Config.<br><br>
+![Live Update](/assets/portfolio/port_sb_remote_config_live.png)<br>
+The major change is the user doesn’t need to re-open the apps to get the new Remote Config value that have been just updated on the server. It creates a seamless experience to the user and fast delivery for Remote Config value to prevent the user from entering the problematic features.<br><br>
+[See Details](https://medium.com/stockbit-bibit-engineering/handling-real-time-remote-config-update-on-stockbit-296a9ce94fa1){.rounded-button target="_blank"}<br><br>
 :::
 <br>
 
