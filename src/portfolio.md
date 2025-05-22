@@ -80,7 +80,8 @@ I make a POC for Pull Request reviewer using Gemini 1.5 Pro. The concept is lett
 ![AI Reviewer](/assets/portfolio/port_sb_ai_reviewer_comment.png)<br>
 :::
 ::: item-details Create Default Release Notes for `TestFlight` and `Firebase` Build
-
+I create a script for CI to parse the list of commit message on release branch to be the default release notes on TestFlight. This help us to see the changelog in every TestFlight build.<br>
+![Release Note](/assets/portfolio/port_sb_release_notes.png)<br>
 :::
 ::: item-details Create Release Script for Simplicity in Weekly Release Ritual
 As Core-iOS team, one of our task is being a Release Manager to handle the process of releasing a build to App Store Connect.<br><br>
