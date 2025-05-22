@@ -45,7 +45,6 @@ When you are going into your destination, sometimes you need to take a rest. But
 ::: item-details **Anacara**: Learn Aksara Jawa
 Anacara is an iOS app designed to teach users how to write Aksara Jawa, the traditional Javanese script. By leveraging the power of machine learning, it can accurately predict and recognize what users draw on the canvas. Apple's `Core ML` framework provides the robust processing needed to handle this task efficiently, ensuring a smooth and interactive learning experience.<br><br>
 ![Anacara](/assets/portfolio/port_personal_anacara_apps_flow.png)<br>
-[See Details](/portfolio/personal/anacara){.rounded-button target="_blank"}<br><br>
 :::
 ::: item-details **Good News**: News Reader Apps
 This News App serves as a showcase of my expertise in mastering various third-party frameworks commonly used by leading tech companies in Indonesia. The app leverages `AsyncDisplayKit` (Texture) to build a smooth and efficient UI, `RxSwift` to implement reactive programming, and `Quick` & `Nimble` for comprehensive unit testing. Additionally, I have integrated GitHub Actions to automate the unit testing workflow in the cloud, ensuring seamless and continuous testing in a modern CI/CD environment.<br><br>
