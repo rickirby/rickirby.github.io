@@ -103,6 +103,19 @@ To make the early step easier, I create a shell script to cut off the `developme
 :::
 <br>
 
+#### 🔐 Security
+::: item-details `Trusted Device` Implementation
+We improve our security by implementing Trusted Device concept. Any login request coming from new device should be approved by the Trusted Device.<br><br>
+![Trusted Device](/assets/portfolio/port_sb_trusted_device.png)<br>
+:::
+::: item-details Integration of `Talsec Security` Framework to Detect Jailbreak and Other Device Manipulation
+We implement [Talsec Security](https://www.talsec.app/) SDK to handle security threats and block it. It is a lightweight and easy-to-integrate security library designed to protect apps from potential threats during their runtime. It contains multiple security checks, each aimed to cover a possible attack vector to ensure a high level of application security. Among other options, it is able to detect reverse engineering, repackaging or cloning attempts, and running in an unsafe OS environment. It is freely distributed for all mobile platforms and is also available for Flutter, Capacitor, Cordova and React Native developers.<br><br>
+![Talsec Security](/assets/portfolio/port_sb_talsec_security.png)<br>
+This SDK can detect modern jailbreak method such as `palera1n`. Some security threats covered are jailbreak, hooks, emulator, missing secure enclave, device binding, etc. From our average tracker data, in last 60 days, we've blocked 735 event from jailbreak, hooked, emulator, and unofficial store so that the user can't enter the apps.<br><br>
+![Talsec Security Data](/assets/portfolio/port_sb_talsec_security_data.png)<br>
+:::
+<br>
+
 #### 📈 Feature Related
 ::: item-details SNAP-BI
 
@@ -156,12 +169,6 @@ To make the early step easier, I create a shell script to cut off the `developme
 
 :::
 ::: item-details `Hyperion` Framework Improvement (3rd Party Lib for iOS Layout Inspection)
-
-:::
-<br>
-
-#### 🔐 Security
-::: item-details Integration of `Talsec Security` Framework to Detect Jailbreak and Other Device Manipulation
 
 :::
 <br>
