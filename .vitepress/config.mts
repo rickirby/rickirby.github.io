@@ -1,5 +1,7 @@
-import { defineConfig } from 'vitepress'
+import { defineConfig, loadEnv } from 'vitepress'
 import markdownItContainer from 'markdown-it-container'
+
+const env = loadEnv('', process.cwd(), 'VITE_')
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
@@ -11,7 +13,22 @@ export default defineConfig({
     ['meta', { property: 'og:type', content: 'website' }],
     ['meta', { property: 'og:locale', content: 'en' }],
     ['meta', { property: 'og:title', content: 'Ricki Bin Yamin | Personal Portfolio Web Page' }],
-    ['meta', { property: 'og:site_name', content: 'Ricki Bin Yamin Portfolio' }]
+    ['meta', { property: 'og:site_name', content: 'Ricki Bin Yamin Portfolio' }],
+    [
+      'script',
+      {},
+      `
+      window.$crisp = [];
+      window.CRISP_WEBSITE_ID = "${env.VITE_CRISP_ID}";
+      (function() {
+        var d = document;
+        var s = d.createElement("script");
+        s.src = "https://client.crisp.chat/l.js";
+        s.async = 1;
+        d.getElementsByTagName("head")[0].appendChild(s);
+      })();
+      `
+    ]
   ],
 
   themeConfig: {
