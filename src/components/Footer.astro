@@ -1,0 +1,49 @@
+---
+import Icon from './Icon.astro';
+import { site } from '../site';
+---
+
+<footer class="footer">
+  <div class="container footer-inner">
+    <p class="footer-copy">{site.copyright}</p>
+    <div class="footer-links">
+      <a class="icon-btn" href={site.linkedin} target="_blank" rel="noopener" aria-label="LinkedIn">
+        <Icon name="linkedin" size={18} />
+      </a>
+      <a class="icon-btn" href={site.github} target="_blank" rel="noopener" aria-label="GitHub">
+        <Icon name="github" size={18} />
+      </a>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    border-top: 1px solid var(--separator);
+    padding-block: 28px;
+  }
+
+  .footer-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .footer-copy {
+    font-size: 0.875rem;
+    color: var(--label-3);
+  }
+
+  .footer-links {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .footer-links .icon-btn {
+    width: 38px;
+    height: 38px;
+  }
+</style>

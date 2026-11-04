@@ -1,0 +1,267 @@
+---
+/** Glass navigation capsule with the page links, an iOS pull-down Appearance menu and social links. */
+import { Image } from 'astro:assets';
+import memoji from '../assets/profile/profile-photo.png';
+import Icon from './Icon.astro';
+import { nav, site } from '../site';
+
+export type Current = 'home' | 'portfolio' | 'resume' | 'none';
+
+interface Props {
+  current: Current;
+}
+
+const { current } = Astro.props;
+const keyOf = (link: string) => (link === '/' ? 'home' : link.slice(1));
+
+const themeOptions = [
+  { value: 'system', label: 'System', icon: 'sun-moon' },
+  { value: 'light', label: 'Light', icon: 'sun' },
+  { value: 'dark', label: 'Dark', icon: 'moon' },
+];
+---
+
+<header class="nav-wrap">
+  <nav class="nav glass" aria-label="Primary">
+    <a class="brand" href="/" aria-label={`${site.name}, home`}>
+      <Image src={memoji} alt="" width={34} height={34} layout="fixed" class="brand-avatar" loading="eager" />
+      <span class="brand-name">{site.name}</span>
+    </a>
+
+    <ul class="nav-links">
+      {
+        nav.map((item) => (
+          <li>
+            <a href={item.link} aria-current={keyOf(item.link) === current ? 'page' : undefined}>
+              {item.text}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+
+    <div class="nav-actions">
+      <a class="icon-btn social" href={site.linkedin} target="_blank" rel="noopener" aria-label="LinkedIn">
+        <Icon name="linkedin" size={17} />
+      </a>
+      <a class="icon-btn social" href={site.github} target="_blank" rel="noopener" aria-label="GitHub">
+        <Icon name="github" size={18} />
+      </a>
+      <div class="menu" data-theme-menu>
+        <button
+          class="icon-btn"
+          type="button"
+          aria-haspopup="menu"
+          aria-expanded="false"
+          aria-controls="theme-menu"
+          aria-label="Appearance"
+          title="Appearance"
+          data-menu-trigger
+        >
+          <span class="theme-icon theme-icon-light"><Icon name="sun" /></span>
+          <span class="theme-icon theme-icon-dark"><Icon name="moon" /></span>
+        </button>
+        <div class="menu-popover glass" id="theme-menu" role="menu" aria-label="Appearance" hidden>
+          <p class="menu-title" aria-hidden="true">Appearance</p>
+          {
+            themeOptions.map((o) => (
+              <button class="menu-item" type="button" role="menuitemradio" aria-checked="false" data-theme-option={o.value}>
+                <span class="menu-check">
+                  <Icon name="check" size={16} strokeWidth={2.5} />
+                </span>
+                <span class="menu-label">{o.label}</span>
+                <Icon name={o.icon} size={18} class="menu-icon" />
+              </button>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<style>
+  .nav-wrap {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    padding: 12px var(--gutter) 0;
+    pointer-events: none;
+    view-transition-name: site-nav;
+  }
+
+  .nav {
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    max-width: calc(var(--max) + 24px);
+    height: var(--nav-h);
+    margin-inline: auto;
+    padding: 0 10px 0 12px;
+    border-radius: 999px;
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    padding-right: 6px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+  }
+
+  .brand :global(.brand-avatar) {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(160deg, #e9f2ff, #d7e6ff);
+  }
+
+  :global([data-theme='dark']) .brand :global(.brand-avatar) {
+    background: linear-gradient(160deg, #2c3e57, #1d2a3d);
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 2px;
+    margin-inline: auto;
+    list-style: none;
+  }
+
+  .nav-links a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 0 16px;
+    border-radius: 999px;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--label-2);
+    transition:
+      color 0.2s var(--ease),
+      background-color 0.2s var(--ease);
+  }
+
+  .nav-links a:hover,
+  .nav-links a[aria-current='page'] {
+    color: var(--label);
+    background: var(--fill);
+  }
+
+  .nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .social {
+    width: 40px;
+    height: 40px;
+  }
+
+  /* Theme menu (iOS pull-down menu) */
+  .menu {
+    position: relative;
+  }
+
+  .theme-icon {
+    display: none;
+  }
+
+  :global([data-theme='light']) .theme-icon-light,
+  :global([data-theme='dark']) .theme-icon-dark {
+    display: grid;
+  }
+
+  .menu-popover {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    min-width: 220px;
+    padding: 6px;
+    border-radius: 18px;
+    background: var(--glass-strong);
+    transform-origin: top right;
+    animation: menu-in 0.32s var(--spring);
+  }
+
+  .menu-popover[hidden] {
+    display: none;
+  }
+
+  @keyframes menu-in {
+    from {
+      opacity: 0;
+      transform: scale(0.85);
+    }
+  }
+
+  .menu-title {
+    padding: 8px 12px 6px;
+    font-size: 0.8125rem;
+    color: var(--label-3);
+  }
+
+  .menu-item {
+    display: grid;
+    grid-template-columns: 20px 1fr auto;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 44px;
+    padding: 0 12px 0 8px;
+    border-radius: 12px;
+    font-size: 1rem;
+    text-align: left;
+  }
+
+  .menu-item:hover,
+  .menu-item:focus-visible {
+    background: var(--fill);
+    outline: none;
+  }
+
+  .menu-check {
+    display: grid;
+    place-items: center;
+    visibility: hidden;
+  }
+
+  .menu-item[aria-checked='true'] .menu-check {
+    visibility: visible;
+  }
+
+  .menu-item :global(.menu-icon) {
+    color: var(--label-2);
+  }
+
+  @media (max-width: 899px) {
+    .nav-links {
+      display: none;
+    }
+
+    .nav-actions {
+      margin-left: auto;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .nav-wrap {
+      padding-inline: 10px;
+    }
+
+    .nav {
+      gap: 8px;
+      padding-right: 8px;
+    }
+  }
+
+  @media (max-width: 360px) {
+    .brand-name {
+      display: none;
+    }
+  }
+</style>

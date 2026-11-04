@@ -1,0 +1,148 @@
+---
+import '@fontsource-variable/inter';
+import '../styles/global.css';
+import Nav, { type Current } from '../components/Nav.astro';
+import TabBar from '../components/TabBar.astro';
+import Footer from '../components/Footer.astro';
+import { site } from '../site';
+import { graph } from '../lib/seo';
+
+interface Props {
+  /** Page name; the site name is appended (VitePress style: "Portfolio | Ricki Bin Yamin"). */
+  title?: string;
+  /** Full <title> override (used by the home page). */
+  fullTitle?: string;
+  description?: string;
+  current?: Current;
+  /** Share image path (1200×630). Defaults to the site card. */
+  image?: string;
+  imageAlt?: string;
+  /** Open Graph type. */
+  type?: 'website' | 'profile' | 'article';
+  /** ISO date for articles. */
+  publishedTime?: string;
+  /** JSON-LD document for this page (see src/lib/seo.ts). */
+  jsonLd?: object;
+  /** Keep this page out of search results (404). */
+  noindex?: boolean;
+}
+
+const {
+  title,
+  fullTitle,
+  description = site.description,
+  current = 'none',
+  image = '/og-image.png',
+  imageAlt = `${site.name}, ${site.role}`,
+  type = 'website',
+  publishedTime,
+  jsonLd = graph(),
+  noindex = false,
+} = Astro.props;
+
+const pageTitle = fullTitle ?? (title ? `${title} | ${site.name}` : site.name);
+const canonical = new URL(
+  Astro.url.pathname.replace(/\.html$/, '').replace(/\/index$/, '/').replace(/(.)\/$/, '$1'),
+  Astro.site,
+);
+const ogImage = new URL(image, Astro.site);
+const crispId = import.meta.env.PUBLIC_CRISP_ID;
+// Codes live in src/site.ts; an env variable of the same name overrides them.
+const googleVerification = import.meta.env.PUBLIC_GOOGLE_SITE_VERIFICATION || site.verification.google;
+const bingVerification = import.meta.env.PUBLIC_BING_SITE_VERIFICATION || site.verification.bing;
+---
+
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f5f5f7" />
+    <script is:inline>
+      // Resolve the colour scheme before first paint: saved choice, else the device setting.
+      (() => {
+        const root = document.documentElement;
+        root.classList.add('js');
+        const mql = matchMedia('(prefers-color-scheme: dark)');
+        const read = () => {
+          try {
+            return localStorage.getItem('theme');
+          } catch {
+            return null;
+          }
+        };
+        const apply = () => {
+          const pref = read() || root.dataset.themePref || 'system';
+          const theme = pref === 'system' ? (mql.matches ? 'dark' : 'light') : pref;
+          root.dataset.theme = theme;
+          root.dataset.themePref = pref;
+          document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#000000' : '#f5f5f7');
+        };
+        apply();
+        mql.addEventListener('change', apply);
+        window.__applyTheme = apply;
+      })();
+    </script>
+
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <meta name="author" content={site.name} />
+    <meta name="robots" content={noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large'} />
+    {!noindex && <link rel="canonical" href={canonical} />}
+    <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+    <link rel="icon" type="image/png" href="/assets/profile/profile-photo.png" />
+    <link rel="apple-touch-icon" href="/assets/profile/profile-photo.png" />
+    {googleVerification && <meta name="google-site-verification" content={googleVerification} />}
+    {bingVerification && <meta name="msvalidate.01" content={bingVerification} />}
+
+    <!-- Social previews (LinkedIn, WhatsApp, Slack, X…) -->
+    <meta property="og:type" content={type} />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:site_name" content={site.ogSiteName} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={imageAlt} />
+    {type === 'profile' && <meta property="profile:first_name" content="Ricki" />}
+    {type === 'profile' && <meta property="profile:last_name" content="Bin Yamin" />}
+    {type === 'article' && <meta property="article:author" content={site.linkedin} />}
+    {type === 'article' && publishedTime && <meta property="article:published_time" content={publishedTime} />}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+    <meta name="twitter:image:alt" content={imageAlt} />
+
+    <!-- Structured data for search engines -->
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+  </head>
+  <body class="has-tabbar">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <Nav current={current} />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer />
+    <TabBar current={current} />
+
+    <script>
+      import '../scripts/app';
+    </script>
+
+    {
+      crispId && (
+        <script is:inline define:vars={{ crispId }}>
+          window.$crisp = [];
+          window.CRISP_WEBSITE_ID = crispId;
+          const s = document.createElement('script');
+          s.src = 'https://client.crisp.chat/l.js';
+          s.async = true;
+          document.head.appendChild(s);
+        </script>
+      )
+    }
+  </body>
+</html>

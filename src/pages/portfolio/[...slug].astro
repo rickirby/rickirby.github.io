@@ -1,0 +1,377 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import { inline, plain } from '../../lib/inline';
+import { article, breadcrumbs, graph, isoDate } from '../../lib/seo';
+
+export async function getStaticPaths() {
+  const articles = await getCollection('articles');
+  return articles.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
+interface Props {
+  entry: CollectionEntry<'articles'>;
+}
+
+// App-icon and tint per article (decoration only).
+const look: Record<string, { icon: string; tint: string }> = {
+  'personal/braille_copying_system': { icon: 'scan-line', tint: 'purple' },
+  'personal/scandocs_document_scanner': { icon: 'file-text', tint: 'blue' },
+  'personal/hikanji': { icon: 'brain', tint: 'red' },
+  'personal/tiba': { icon: 'alarm-clock', tint: 'orange' },
+  'personal/good_news': { icon: 'newspaper', tint: 'green' },
+  'stockbit/build_time_optimization': { icon: 'timer', tint: 'orange' },
+  'stockbit/linux_runner_danger_swiftlint': { icon: 'terminal', tint: 'teal' },
+  'stockbit/swiftlint_quarantine_strategy': { icon: 'shield-check', tint: 'indigo' },
+};
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const { title, subtitle, company, createdAt, description } = entry.data;
+const isPersonal = entry.id.startsWith('personal/');
+const { icon, tint } = look[entry.id] ?? { icon: 'sparkles', tint: 'blue' };
+const path = `/portfolio/${entry.id}`;
+const shareImage = `/og/${entry.id}.png`; // built by `npm run og`
+const published = isoDate(createdAt);
+
+// Pager: personal projects follow the original sidebar order; company articles link back to Portfolio
+// (their original front matter was `prev: Portfolio`, `next: false`).
+type Link = { text: string; href: string; icon: string; tint: string };
+let prev: Link | undefined = { text: 'Portfolio', href: '/portfolio', icon: 'briefcase', tint: 'blue' };
+let next: Link | undefined;
+if (isPersonal) {
+  const list = (await getCollection('articles', (e) => e.id.startsWith('personal/'))).sort(
+    (a, b) => a.data.order - b.data.order,
+  );
+  const i = list.findIndex((e) => e.id === entry.id);
+  const link = (e?: CollectionEntry<'articles'>): Link | undefined =>
+    e && {
+      text: e.data.navLabel ?? e.data.title,
+      href: `/portfolio/${e.id}`,
+      ...(look[e.id] ?? { icon: 'sparkles', tint: 'blue' }),
+    };
+  prev = link(list[i - 1]) ?? prev;
+  next = link(list[i + 1]);
+}
+---
+
+<Base
+  title={plain(title)}
+  description={description}
+  current="portfolio"
+  type="article"
+  image={shareImage}
+  imageAlt={`${plain(title)} by Ricki Bin Yamin`}
+  publishedTime={published}
+  jsonLd={graph(
+    article({
+      path,
+      headline: plain(title),
+      description,
+      image: shareImage,
+      datePublished: published,
+      about: company,
+    }),
+    breadcrumbs([
+      { name: 'Home', path: '/' },
+      { name: 'Portfolio', path: '/portfolio' },
+      { name: plain(title), path },
+    ]),
+  )}
+>
+  <article class={`case tint-${tint}`}>
+    <div class="case-hero">
+      <div class="case-hero-bg" aria-hidden="true"></div>
+      <div class="container-narrow">
+        <a class="back-pill" href="/portfolio">
+          <Icon name="chevron-left" size={18} strokeWidth={2.4} />
+          Portfolio
+        </a>
+        <p class="case-eyebrow">
+          <span class="app-icon"><Icon name={icon} /></span>
+          <span>{isPersonal ? 'Personal Project' : company}</span>
+        </p>
+        <h1 class="case-title" set:html={inline(title)} />
+        {subtitle && <p class="case-lead">{subtitle}</p>}
+        {
+          (company || createdAt) && (
+            <dl class="case-meta card">
+              {company && (
+                <div>
+                  <dt>Company Related</dt>
+                  <dd>{company}</dd>
+                </div>
+              )}
+              {createdAt && (
+                <div>
+                  <dt>Created At</dt>
+                  <dd>{createdAt}</dd>
+                </div>
+              )}
+            </dl>
+          )
+        }
+      </div>
+    </div>
+
+    <div class="container-narrow prose">
+      <Content />
+    </div>
+
+    <nav class="container-narrow case-footer" aria-label="More pages">
+      {
+        [prev && { ...prev, kicker: 'Previous page', dir: 'prev' }, next && { ...next, kicker: 'Next page', dir: 'next' }]
+          .filter(Boolean)
+          .map((l) => (
+            <a class={`next-card card tint-${l!.tint}`} href={l!.href}>
+              <span class="app-icon">
+                <Icon name={l!.icon} />
+              </span>
+              <span class="next-text">
+                <span class="next-kicker">{l!.kicker}</span>
+                <span class="next-title">{l!.text}</span>
+              </span>
+              <Icon name={l!.dir === 'prev' ? 'arrow-left' : 'arrow-right'} class="next-arrow" />
+            </a>
+          ))
+      }
+    </nav>
+  </article>
+</Base>
+
+<style>
+  .case-hero {
+    position: relative;
+    margin-top: calc(-1 * (var(--nav-h) + 12px));
+    padding: calc(var(--nav-h) + 12px + clamp(24px, 5vw, 56px)) 0 clamp(28px, 4vw, 40px);
+    overflow: clip;
+  }
+
+  .case-hero-bg {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: radial-gradient(60% 70% at 50% 0%, color-mix(in srgb, var(--tint) 16%, transparent), transparent 70%);
+  }
+
+  .back-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    min-height: 40px;
+    padding: 0 16px 0 10px;
+    margin-bottom: 32px;
+    border-radius: 999px;
+    background: var(--fill);
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 0.9375rem;
+    transition:
+      background-color 0.2s var(--ease),
+      transform 0.25s var(--spring);
+  }
+
+  .back-pill:hover {
+    background: var(--fill-strong);
+  }
+
+  .back-pill:active {
+    transform: scale(0.96);
+  }
+
+  .case-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--tint);
+  }
+
+  .case-eyebrow .app-icon {
+    --size: 40px;
+  }
+
+  .case-title {
+    margin-top: 20px;
+    font-size: clamp(2.25rem, 5.6vw, 3.75rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1.04;
+  }
+
+  .case-title :global(code) {
+    font-size: 0.6em;
+    vertical-align: 0.1em;
+    border-radius: 10px;
+  }
+
+  .case-lead {
+    margin-top: 18px;
+    font-size: clamp(1.125rem, 2vw, 1.375rem);
+    line-height: 1.5;
+    color: var(--label-2);
+  }
+
+  .case-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    margin: 32px 0 0;
+    padding: 6px 0;
+    border-radius: var(--radius);
+  }
+
+  .case-meta > div {
+    padding: 12px 20px;
+  }
+
+  .case-meta dt {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--label-3);
+  }
+
+  .case-meta dd {
+    margin: 4px 0 0;
+    font-weight: 600;
+  }
+
+  .case-footer {
+    display: grid;
+    gap: 16px;
+    padding-block: 48px clamp(72px, 10vw, 112px);
+  }
+
+  .next-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px 22px;
+    transition:
+      transform 0.4s var(--spring),
+      border-color 0.3s var(--ease);
+  }
+
+  .next-card:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--tint) 40%, var(--card-border));
+  }
+
+  .next-text {
+    display: grid;
+    gap: 2px;
+  }
+
+  .next-kicker {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--label-3);
+  }
+
+  .next-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.3;
+  }
+
+  .next-card :global(.next-arrow) {
+    margin-left: auto;
+    flex: none;
+    color: var(--tint);
+  }
+
+  /* ---------- Long-form article typography (same as the portfolio site) ---------- */
+  .prose {
+    font-size: 1.125rem;
+    line-height: 1.7;
+  }
+
+  .prose :global(h2) {
+    margin: 2.2em 0 0.6em;
+    font-size: clamp(1.5rem, 3vw, 1.875rem);
+    font-weight: 700;
+  }
+
+  .prose :global(h3) {
+    margin: 1.8em 0 0.5em;
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+
+  .prose :global(p),
+  .prose :global(ul),
+  .prose :global(ol) {
+    margin: 0 0 1.1em;
+    color: color-mix(in srgb, var(--label) 88%, var(--label-2));
+  }
+
+  .prose :global(ul),
+  .prose :global(ol) {
+    padding-left: 1.3em;
+  }
+
+  .prose :global(li) {
+    margin: 0.35em 0;
+  }
+
+  .prose :global(li::marker) {
+    color: var(--tint);
+  }
+
+  .prose :global(strong) {
+    color: var(--label);
+  }
+
+  .prose :global(a) {
+    color: var(--accent);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+    overflow-wrap: anywhere;
+  }
+
+  .prose :global(img) {
+    width: auto;
+    max-width: 100%;
+    margin: 1.6em auto 0.6em;
+    border-radius: 16px;
+    border: 1px solid var(--card-border);
+    background: #fff;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .prose :global(figure) {
+    margin: 0 0 1.1em;
+  }
+
+  .prose :global(figure.narrow) {
+    max-width: var(--w, 100%);
+  }
+
+  .prose :global(.gallery) {
+    margin: 1.6em 0;
+  }
+
+  .prose :global(.video) {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    margin: 1.6em 0;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #000;
+  }
+
+  .prose :global(.video iframe) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
+  .prose > :global(:first-child) {
+    margin-top: 1.2em;
+  }
+</style>

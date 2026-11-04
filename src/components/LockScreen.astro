@@ -1,0 +1,674 @@
+---
+/**
+ * A CSS iPhone lock screen that loops like the real thing:
+ *   wake → notifications arrive with previews hidden → Face ID scans in the Dynamic Island
+ *   → padlock opens and previews expand → (time to read) → screen dims → screen off → repeat.
+ *
+ * Notification text is quoted from the original portfolio wording. Timing lives in `timing` below.
+ * The phases are driven by `setupLockScreen()` in src/scripts/app.ts.
+ */
+import Icon from './Icon.astro';
+
+const lock = {
+  unlock: 'Swipe up to open',
+  hiddenPreview: 'Notification',
+  notifications: [
+    {
+      app: 'Xcode',
+      time: 'now',
+      title: 'Build Time Optimization',
+      body: 'From almost 6 minutes to be only 3 minutes 26 seconds.',
+      icon: 'hammer',
+      tint: 'blue',
+    },
+    {
+      app: 'Gitlab-CI',
+      time: '2m ago',
+      title: 'danger-swiftlint',
+      body: 'The process was significantly faster on Linux, completing in just 38 seconds, compared to over 3 minutes on Xcode Cloud CI.',
+      icon: 'git-pull-request',
+      tint: 'orange',
+    },
+    {
+      app: 'Firebase',
+      time: '1h ago',
+      title: 'OneSignal to FCM Migration (Save USD 20,000 per Year)',
+      body: 'We migrate Push Notification Services from OneSignal to Firebase Cloud Messaging and we can cut the subscribtion fee for about USD 20,000/year.',
+      icon: 'bell-ring',
+      tint: 'yellow',
+    },
+    {
+      app: 'Talsec Security',
+      time: 'Yesterday',
+      title: 'Talsec Security',
+      body: "From our average tracker data, in last 60 days, we've blocked 735 event from jailbreak, hooked, emulator, and unofficial store so that the user can't enter the apps.",
+      icon: 'shield-check',
+      tint: 'green',
+    },
+  ],
+};
+const d = lock;
+
+/** All in milliseconds, measured from the moment the screen wakes. */
+const timing = {
+  scan: 2900, // Face ID starts scanning (after the last notification has landed)
+  unlock: 4100, // padlock opens and the notification text is revealed
+  read: 10000, // how long the unlocked notifications stay on screen to be read
+  dim: 1800, // the screen dims before switching off
+  off: 1600, // the screen stays black before waking again
+};
+
+// Server-rendered fallback; the client swaps in today's date.
+const date = new Intl.DateTimeFormat('en-US', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
+---
+
+<div class="device-stage" aria-hidden="true">
+  <div class="device-glow"></div>
+  <div class="iphone" data-iphone data-phase="unlocked" data-timing={JSON.stringify(timing)}>
+    <div class="iphone-body">
+      <div class="screen">
+        <div class="island">
+          <svg
+            class="faceid"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <g class="faceid-frame">
+              <path d="M3 8V6a3 3 0 0 1 3-3h2"></path>
+              <path d="M16 3h2a3 3 0 0 1 3 3v2"></path>
+              <path d="M21 16v2a3 3 0 0 1-3 3h-2"></path>
+              <path d="M8 21H6a3 3 0 0 1-3-3v-2"></path>
+            </g>
+            <g class="faceid-face">
+              <path d="M8.5 9v1.5"></path>
+              <path d="M15.5 9v1.5"></path>
+              <path d="M12 9v4.5h-1"></path>
+              <path d="M9 16.2c1.6 1.3 4.4 1.3 6 0"></path>
+            </g>
+          </svg>
+        </div>
+
+        <div class="status">
+          <Icon name="signal" size={14} strokeWidth={2.6} />
+          <Icon name="wifi" size={14} strokeWidth={2.6} />
+          <Icon name="battery" size={18} strokeWidth={2} />
+        </div>
+
+        <div class="lock">
+          <svg class="padlock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+            <path class="shackle" d="M7 14V7a5 5 0 0 1 10 0v4"></path>
+            <rect class="lock-body" x="4" y="11" width="16" height="11" rx="2.5" fill="currentColor" stroke="none"></rect>
+          </svg>
+        </div>
+        <p class="date" data-lock-date>{date}</p>
+        <p class="clock">9:41</p>
+
+        <ul class="notifications">
+          {
+            d.notifications.map((n, i) => (
+              <li class="notif" style={`--i:${i}`}>
+                <span class={`app-icon tint-${n.tint}`}>
+                  <Icon name={n.icon} strokeWidth={2.2} />
+                </span>
+                <div class="notif-body">
+                  <div class="notif-head">
+                    <span class="notif-title">
+                      <strong class="when-locked">{n.app}</strong>
+                      <strong class="when-unlocked">{n.title}</strong>
+                    </span>
+                    <span class="notif-time">{n.time}</span>
+                  </div>
+                  <div class="preview preview-hidden">
+                    <p>{d.hiddenPreview}</p>
+                  </div>
+                  <div class="preview preview-full">
+                    <p>{n.body}</p>
+                  </div>
+                </div>
+              </li>
+            ))
+          }
+        </ul>
+
+        <div class="quick">
+          <span><Icon name="flashlight" size={18} /></span>
+          <span><Icon name="camera" size={18} /></span>
+        </div>
+        <p class="unlock">{d.unlock}</p>
+        <div class="home-indicator"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script is:inline>
+  // Start asleep (before first paint) unless the visitor prefers reduced motion; app.ts takes it from here.
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.querySelector('[data-iphone]')?.setAttribute('data-phase', 'asleep');
+  }
+</script>
+
+<style>
+  .device-stage {
+    position: relative;
+    display: grid;
+    place-items: center;
+    padding: 24px 0;
+  }
+
+  .device-glow {
+    position: absolute;
+    inset: 8% 4%;
+    border-radius: 50%;
+    background:
+      radial-gradient(closest-side, color-mix(in srgb, #5e5ce6 45%, transparent), transparent),
+      radial-gradient(closest-side at 70% 70%, color-mix(in srgb, #ff375f 35%, transparent), transparent);
+    filter: blur(40px);
+    opacity: 0.55;
+  }
+
+  /* The outer element is the size container; everything inside is sized in cqw. */
+  .iphone {
+    position: relative;
+    container-type: inline-size;
+    width: clamp(260px, 26vw, 320px);
+    transform: rotate(-2deg);
+    animation: float 7s ease-in-out infinite;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .iphone-body {
+    position: relative;
+    aspect-ratio: 9 / 19.3;
+    padding: 3.6cqw;
+    border-radius: 17cqw;
+    background: linear-gradient(145deg, #f1f1f3 0%, #b9babd 30%, #e8e8ea 55%, #9c9ea1 100%);
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.5),
+      0 0 0 1px rgba(0, 0, 0, 0.18),
+      0 40px 80px -24px rgba(20, 20, 60, 0.45),
+      0 20px 40px -20px rgba(0, 0, 0, 0.35);
+  }
+
+  :global([data-theme='dark']) .iphone-body {
+    background: linear-gradient(145deg, #5a5a5e 0%, #2a2a2c 30%, #4a4a4e 55%, #1c1c1e 100%);
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+      0 0 0 1px rgba(0, 0, 0, 0.6),
+      0 40px 100px -24px rgba(94, 92, 230, 0.35);
+  }
+
+  /* Side buttons */
+  .iphone-body::before,
+  .iphone-body::after {
+    content: '';
+    position: absolute;
+    width: 1.3cqw;
+    border-radius: 2px;
+    background: inherit;
+    filter: brightness(0.9);
+  }
+
+  .iphone-body::before {
+    left: -1.1cqw;
+    top: 22%;
+    height: 9%;
+    box-shadow: 0 13cqw 0 0 #a9abae;
+  }
+
+  .iphone-body::after {
+    right: -1.1cqw;
+    top: 28%;
+    height: 14%;
+  }
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: rotate(-2deg) translateY(0);
+    }
+    50% {
+      transform: rotate(-2deg) translateY(-10px);
+    }
+  }
+
+  .screen {
+    position: relative;
+    height: 100%;
+    overflow: hidden;
+    border-radius: 13.6cqw;
+    color: #fff;
+    background:
+      radial-gradient(120% 70% at 0% 0%, #5e5ce6 0%, transparent 60%),
+      radial-gradient(90% 60% at 100% 35%, #ff375f 0%, transparent 60%),
+      radial-gradient(120% 70% at 30% 100%, #ff9f0a 0%, transparent 65%),
+      linear-gradient(180deg, #2b2a6b, #4b1d4f);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.5);
+  }
+
+  :global([data-theme='dark']) .screen {
+    background:
+      radial-gradient(120% 70% at 0% 0%, #3634a3 0%, transparent 60%),
+      radial-gradient(90% 60% at 100% 35%, #a1173a 0%, transparent 60%),
+      radial-gradient(120% 70% at 30% 100%, #a35a00 0%, transparent 65%),
+      linear-gradient(180deg, #121138, #240b26);
+  }
+
+  /* Screen power: a black layer over the display for dim / off / asleep. */
+  .screen::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    background: #000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.45s ease-out;
+  }
+
+  .iphone[data-phase='dimming'] .screen::after {
+    opacity: 0.6;
+    transition: opacity 1.2s ease-in-out;
+  }
+
+  .iphone[data-phase='off'] .screen::after,
+  .iphone[data-phase='asleep'] .screen::after {
+    opacity: 1;
+    transition: opacity 0.6s ease-in;
+  }
+
+  /* ---------- Dynamic Island + Face ID ---------- */
+  .island {
+    position: absolute;
+    z-index: 5;
+    top: 3.6cqw;
+    left: 50%;
+    display: grid;
+    place-items: center;
+    width: 31cqw;
+    height: 9.2cqw;
+    border-radius: 4.6cqw;
+    background: #000;
+    transform: translateX(-50%);
+    transition:
+      width 0.5s var(--spring),
+      height 0.5s var(--spring),
+      border-radius 0.5s var(--spring);
+  }
+
+  .faceid {
+    width: 12cqw;
+    height: 12cqw;
+    color: #f5f5f7;
+    opacity: 0;
+    transform: scale(0.5);
+    transition:
+      opacity 0.2s ease,
+      transform 0.3s ease;
+  }
+
+  .iphone[data-phase='scanning'] .island {
+    width: 23cqw;
+    height: 23cqw;
+    border-radius: 6.4cqw;
+  }
+
+  .iphone[data-phase='scanning'] .faceid {
+    opacity: 1;
+    transform: scale(1);
+    transition:
+      opacity 0.25s ease 0.18s,
+      transform 0.45s var(--spring) 0.18s;
+  }
+
+  .iphone[data-phase='scanning'] .faceid-frame {
+    transform-box: view-box;
+    transform-origin: 12px 12px;
+    animation: faceid-scan 1s ease-in-out 0.35s;
+  }
+
+  .iphone[data-phase='scanning'] .faceid-face {
+    animation: faceid-look 1s ease-in-out 0.35s;
+  }
+
+  @keyframes faceid-scan {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    45% {
+      transform: scale(0.86);
+    }
+    75% {
+      transform: scale(1.05);
+    }
+  }
+
+  @keyframes faceid-look {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    30% {
+      transform: translateX(-0.8px);
+    }
+    65% {
+      transform: translateX(0.8px);
+    }
+  }
+
+  .status {
+    position: absolute;
+    top: 5.4cqw;
+    right: 7cqw;
+    display: flex;
+    align-items: center;
+    gap: 1.4cqw;
+  }
+
+  .status :global(svg) {
+    width: 4.6cqw;
+    height: auto;
+  }
+
+  .status :global(svg:last-child) {
+    width: 6.4cqw;
+  }
+
+  /* ---------- Padlock ---------- */
+  .lock {
+    display: grid;
+    place-items: center;
+    padding-top: 15cqw;
+    transition: opacity 0.2s ease;
+  }
+
+  .padlock {
+    width: 5.2cqw;
+    height: auto;
+    overflow: visible;
+    opacity: 0.92;
+  }
+
+  /*
+   * Unlock like iOS (SF Symbol "lock.open.fill"): the shackle lifts out, then slides right so its
+   * left leg stays in the body and the right leg hangs free. The body shifts left to keep it centred.
+   */
+  .shackle,
+  .lock-body {
+    transform-box: view-box;
+    transition: transform 0.45s var(--ease);
+  }
+
+  .iphone[data-phase='scanning'] .lock {
+    opacity: 0;
+  }
+
+  .iphone:is([data-phase='unlocked'], [data-phase='dimming'], [data-phase='off']) .shackle {
+    transform: translate(4px, -1px);
+  }
+
+  .iphone:is([data-phase='unlocked'], [data-phase='dimming'], [data-phase='off']) .lock-body {
+    transform: translateX(-4px);
+  }
+
+  .iphone[data-phase='unlocked'] .shackle {
+    animation: shackle-open 0.6s var(--ease);
+  }
+
+  .iphone[data-phase='unlocked'] .lock-body {
+    animation: body-shift 0.6s var(--ease);
+  }
+
+  @keyframes shackle-open {
+    0% {
+      transform: translate(0, 0);
+    }
+    40% {
+      transform: translate(0, -3px);
+    }
+    100% {
+      transform: translate(4px, -1px);
+    }
+  }
+
+  @keyframes body-shift {
+    0%,
+    40% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-4px);
+    }
+  }
+
+  .date {
+    margin-top: 2.4cqw;
+    text-align: center;
+    font-size: 5.4cqw;
+    font-weight: 600;
+    letter-spacing: 0;
+    opacity: 0.9;
+  }
+
+  .clock {
+    margin-top: -1cqw;
+    text-align: center;
+    font-family: var(--font-display);
+    font-size: 27cqw;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.035em;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 2px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  /* ---------- Notifications ---------- */
+  .notifications {
+    position: absolute;
+    left: 3.6cqw;
+    right: 3.6cqw;
+    bottom: 26.5cqw;
+    display: grid;
+    gap: 2cqw;
+    list-style: none;
+  }
+
+  .notif {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 3cqw;
+    padding: 3cqw 3.6cqw;
+    border-radius: 6.8cqw;
+    background: rgba(245, 245, 247, 0.62);
+    color: #1d1d1f;
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(20px) saturate(180%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  }
+
+  :global([data-theme='dark']) .notif {
+    background: rgba(40, 40, 44, 0.55);
+    color: #f5f5f7;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  /* They arrive one by one after every wake (the animation restarts when leaving "asleep"). */
+  .iphone:not([data-phase='asleep']) .notif {
+    animation: notif-in 0.7s var(--spring) both;
+    animation-delay: calc(0.4s + var(--i) * 0.45s);
+  }
+
+  .iphone[data-phase='asleep'] .notif {
+    opacity: 0;
+  }
+
+  @keyframes notif-in {
+    from {
+      opacity: 0;
+      transform: translateY(-30%) scale(0.92);
+    }
+  }
+
+  .notif .app-icon {
+    --size: 10.6cqw;
+  }
+
+  .notif-body {
+    min-width: 0;
+  }
+
+  .notif-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 2cqw;
+    font-size: 4.2cqw;
+    line-height: 1.25;
+  }
+
+  /* Locked and unlocked titles share one line and cross-fade. */
+  .notif-title {
+    display: grid;
+    min-width: 0;
+  }
+
+  .notif-title > strong {
+    grid-area: 1 / 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 600;
+    transition: opacity 0.35s ease;
+  }
+
+  .notif-time {
+    flex: none;
+    font-size: 3.6cqw;
+    opacity: 0.55;
+  }
+
+  /* Previews collapse/expand smoothly via grid rows (0fr ↔ 1fr). */
+  .preview {
+    display: grid;
+    grid-template-rows: 1fr;
+    font-size: 3.9cqw;
+    line-height: 1.3;
+    transition:
+      grid-template-rows 0.55s var(--ease),
+      opacity 0.4s ease;
+  }
+
+  .preview > p {
+    min-height: 0;
+    overflow: hidden;
+    opacity: 0.85;
+  }
+
+  /* Long previews are cut off after two lines, like iOS. */
+  .preview-full > p {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  /* Default (unlocked, no JS, reduced motion): full content. */
+  .when-locked,
+  .preview-hidden {
+    opacity: 0;
+  }
+
+  .preview-hidden {
+    grid-template-rows: 0fr;
+  }
+
+  /* Locked: app name + "Notification" only. */
+  .iphone:is([data-phase='asleep'], [data-phase='arriving'], [data-phase='scanning']) .when-locked {
+    opacity: 1;
+  }
+
+  .iphone:is([data-phase='asleep'], [data-phase='arriving'], [data-phase='scanning']) .when-unlocked {
+    opacity: 0;
+  }
+
+  .iphone:is([data-phase='asleep'], [data-phase='arriving'], [data-phase='scanning']) .preview-hidden {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+
+  .iphone:is([data-phase='asleep'], [data-phase='arriving'], [data-phase='scanning']) .preview-full {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+
+  /* ---------- Bottom of the lock screen ---------- */
+  .quick {
+    position: absolute;
+    left: 10cqw;
+    right: 10cqw;
+    bottom: 9cqw;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .quick span {
+    display: grid;
+    place-items: center;
+    width: 14cqw;
+    height: 14cqw;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.28);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
+
+  .quick :global(svg) {
+    width: 6cqw;
+    height: auto;
+  }
+
+  .unlock {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 13.5cqw;
+    text-align: center;
+    font-size: 3.6cqw;
+    font-weight: 500;
+    opacity: 0.75;
+    animation: hint 2.6s ease-in-out infinite;
+  }
+
+  @keyframes hint {
+    0%,
+    100% {
+      opacity: 0.45;
+    }
+    50% {
+      opacity: 0.9;
+    }
+  }
+
+  .home-indicator {
+    position: absolute;
+    left: 50%;
+    bottom: 2.6cqw;
+    width: 36cqw;
+    height: 1.6cqw;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.9);
+    transform: translateX(-50%);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .iphone {
+      animation: none;
+      cursor: default;
+    }
+  }
+</style>

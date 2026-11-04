@@ -1,0 +1,550 @@
+---
+import { Image } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import { header, summary, experienceTip, experience, volunteer, education, type Entry } from '../data/resume';
+import { companyImage } from '../lib/images';
+import { inline, slugify } from '../lib/inline';
+import { seo, site } from '../site';
+import { breadcrumbs, graph, page } from '../lib/seo';
+import memoji from '../assets/profile/profile-photo.png';
+
+const heading = (e: Entry) => (e.role ? `${e.org} - ${e.role}` : e.org);
+
+// Brand colour and logo per organisation (logos only exist for the first three).
+const brands: Record<string, { color: string; logo?: { light: string; dark: string } }> = {
+  Stockbit: { color: '#00a65a', logo: { light: 'sb_logo_light.png', dark: 'sb_logo_dark.png' } },
+  Traveloka: { color: '#1ba0e2', logo: { light: 'tvlk_logo_light.png', dark: 'tvlk_logo_dark.png' } },
+  'RCTI+': { color: '#e4202e', logo: { light: 'rcti_logo.png', dark: 'rcti_logo.png' } },
+  'DANA Indonesia': { color: '#118eea' },
+  'Apple Developer Academy @UC': { color: '#8e8e93' },
+};
+---
+
+<Base
+  title="Resume"
+  current="resume"
+  description={seo.resume.description}
+  type="profile"
+  jsonLd={graph(
+    page({ type: 'ProfilePage', path: '/resume', name: 'Resume | Ricki Bin Yamin', description: seo.resume.description }),
+    breadcrumbs([
+      { name: 'Home', path: '/' },
+      { name: 'Resume', path: '/resume' },
+    ]),
+  )}
+>
+  <header class="page-hero">
+    <div class="container">
+      <h1 class="page-title reveal">Resume</h1>
+
+      <div class="id-card card reveal" style="--delay:60ms">
+        <span class="id-avatar">
+          <Image src={memoji} alt="" width={72} height={72} layout="fixed" />
+        </span>
+        <div class="id-lines">
+          <p class="id-name">{header.name}</p>
+          <p>{header.role}</p>
+          <p class="id-place"><Icon name="map-pin" size={14} />{header.location}</p>
+        </div>
+        <a class="btn btn-primary" href={site.resume} download>
+          <Icon name="download" />
+          {header.download}
+          <span class="pdf">PDF</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <section class="section summary-section" aria-labelledby="summary">
+    <div class="container">
+      <header class="section-head reveal">
+        <h2 class="section-title" id="summary">Summary</h2>
+      </header>
+      <p class="summary card reveal" set:html={inline(summary)} />
+    </div>
+  </section>
+
+  <section class="section experience" aria-labelledby="experience">
+    <div class="container">
+      <header class="section-head reveal">
+        <h2 class="section-title" id="experience">Experience</h2>
+      </header>
+
+      <aside class="tip-card card reveal">
+        <span class="app-icon tint-yellow"><Icon name="lightbulb" /></span>
+        <div>
+          <p class="tip-title">Tip</p>
+          <p class="tip-body">{experienceTip}</p>
+        </div>
+      </aside>
+
+      <ol class="timeline">
+        {
+          experience.map((e, i) => {
+            const brand = brands[e.org] ?? { color: 'var(--accent)' };
+            const logo = brand.logo;
+            return (
+              <li class="job reveal" style={`--brand:${brand.color}`}>
+                <span class="job-dot" aria-hidden="true" />
+                <article class="job-card card">
+                  <header class="job-head">
+                    <div class="job-brand">
+                      {logo ? (
+                        <>
+                          <Image src={companyImage(logo.light)} alt="" height={44} layout="fixed" class="logo logo-light" />
+                          <Image src={companyImage(logo.dark)} alt="" height={44} layout="fixed" class="logo logo-dark" />
+                        </>
+                      ) : (
+                        <span class="logo-text" aria-hidden="true">
+                          {e.org}
+                        </span>
+                      )}
+                    </div>
+                    {e.period && (
+                      <p class="job-period">
+                        {i === 0 && <span class="now-dot" aria-hidden="true" />}
+                        {e.period}
+                      </p>
+                    )}
+                  </header>
+                  <h3 class="job-role" id={slugify(heading(e))}>
+                    <span class="visually-hidden">{e.org} - </span>
+                    {e.role}
+                  </h3>
+                  {e.place && (
+                    <p class="job-loc">
+                      <Icon name="map-pin" size={14} />
+                      {e.place}
+                    </p>
+                  )}
+                  <ul class="job-bullets">
+                    {e.points.map((p) => (
+                      <li set:html={inline(p)} />
+                    ))}
+                  </ul>
+                </article>
+              </li>
+            );
+          })
+        }
+      </ol>
+    </div>
+  </section>
+
+  <section class="section extras-section" aria-label="Volunteer Experience and Education">
+    <div class="container extras">
+      {
+        [
+          { id: 'volunteer-experience', title: 'Volunteer Experience', entries: volunteer, icon: 'heart-handshake', tint: 'pink' },
+          { id: 'education', title: 'Education', entries: education, icon: 'graduation-cap', tint: 'indigo' },
+        ].map((s) => (
+          <div class="extra-col">
+            <h2 class="extra-heading reveal" id={s.id}>
+              {s.title}
+            </h2>
+            {s.entries.map((e) => (
+              <article class="extra card reveal">
+                <span class={`app-icon tint-${s.tint}`}>
+                  <Icon name={s.icon} />
+                </span>
+                <div class="extra-text">
+                  <h3 class="extra-title" id={slugify(heading(e))}>
+                    {e.org}
+                    {e.role && (
+                      <>
+                        <span class="visually-hidden"> - </span>
+                        <span class="extra-role">{e.role}</span>
+                      </>
+                    )}
+                  </h3>
+                  {e.line && <p class="extra-sub">{e.line}</p>}
+                  <ul class="extra-points">
+                    {e.points.map((p) => (
+                      <li set:html={inline(p)} />
+                    ))}
+                  </ul>
+                </div>
+              </article>
+            ))}
+          </div>
+        ))
+      }
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* ---------- Header ---------- */
+  .id-card {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px 20px;
+    margin-top: 28px;
+    padding: 20px 22px;
+  }
+
+  .id-avatar {
+    flex: none;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: linear-gradient(160deg, #e9f2ff, #d7e6ff);
+  }
+
+  :global([data-theme='dark']) .id-avatar {
+    background: linear-gradient(160deg, #2c3e57, #1d2a3d);
+  }
+
+  .id-avatar :global(img) {
+    width: 100%;
+    height: 100%;
+  }
+
+  .id-lines {
+    flex: 1;
+    min-width: 200px;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    color: var(--label-2);
+  }
+
+  .id-name {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--label);
+  }
+
+  .id-place {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--label-3);
+  }
+
+  .pdf {
+    font-size: 0.625rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    padding: 2px 6px;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.24);
+  }
+
+  /* ---------- Summary ---------- */
+  .summary-section {
+    padding-top: clamp(32px, 5vw, 56px);
+    padding-bottom: 0;
+  }
+
+  .summary {
+    padding: clamp(22px, 3vw, 32px);
+    font-size: 1.0625rem;
+    line-height: 1.8;
+    color: var(--label-2);
+  }
+
+  .summary :global(strong) {
+    color: var(--label);
+  }
+
+  /* ---------- Experience timeline (same as the portfolio site) ---------- */
+  .experience {
+    padding-bottom: 0;
+  }
+
+  .experience .tip-card {
+    margin-bottom: 24px;
+  }
+
+  .timeline {
+    position: relative;
+    display: grid;
+    gap: 16px;
+    list-style: none;
+    padding-left: 36px;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 9px;
+    top: 28px;
+    bottom: 28px;
+    width: 2px;
+    border-radius: 2px;
+    background: linear-gradient(180deg, var(--accent), var(--separator) 40%, var(--separator));
+  }
+
+  .job {
+    position: relative;
+  }
+
+  .job-dot {
+    position: absolute;
+    left: -36px;
+    top: 30px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 2px solid var(--brand);
+    box-shadow: 0 0 0 4px var(--bg);
+  }
+
+  .job-dot::after {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border-radius: 50%;
+    background: var(--brand);
+  }
+
+  .job-card {
+    padding: clamp(20px, 3vw, 32px);
+  }
+
+  .job-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 16px;
+    margin-bottom: 12px;
+  }
+
+  .job-brand {
+    display: flex;
+    align-items: center;
+    min-height: 32px;
+  }
+
+  .job-brand :global(.logo) {
+    width: auto;
+    height: 44px;
+    margin: -6px 0 -6px -6px;
+  }
+
+  .job-brand :global(.logo-dark) {
+    display: none;
+  }
+
+  :global([data-theme='dark']) .job-brand :global(.logo-light) {
+    display: none;
+  }
+
+  :global([data-theme='dark']) .job-brand :global(.logo-dark) {
+    display: block;
+  }
+
+  .logo-text {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--brand);
+  }
+
+  :global([data-theme='dark']) .logo-text {
+    color: color-mix(in srgb, var(--brand) 60%, #fff);
+  }
+
+  .job-period {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: var(--fill);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--label-2);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .now-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 25%, transparent);
+  }
+
+  .job-role {
+    font-size: clamp(1.2rem, 2vw, 1.5rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .job-loc {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    font-size: 0.875rem;
+    color: var(--label-3);
+  }
+
+  .job-bullets {
+    display: grid;
+    gap: 10px;
+    margin-top: 18px;
+    list-style: none;
+  }
+
+  .job-bullets li {
+    position: relative;
+    padding-left: 22px;
+    font-size: 0.98rem;
+    line-height: 1.55;
+    color: var(--label-2);
+  }
+
+  .job-bullets li::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 0.62em;
+    width: 7px;
+    height: 7px;
+    border-radius: 2px;
+    background: var(--brand);
+    transform: rotate(45deg);
+    opacity: 0.85;
+  }
+
+  .job-bullets :global(strong) {
+    color: var(--label);
+  }
+
+  /* ---------- Volunteer + Education ---------- */
+  .extras-section {
+    padding-top: clamp(48px, 7vw, 80px);
+  }
+
+  .extras {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 24px;
+    padding-left: 36px;
+  }
+
+  .extra-col {
+    display: grid;
+    align-content: start;
+    gap: 14px;
+  }
+
+  .extra-heading {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 700;
+  }
+
+  .extra {
+    display: flex;
+    gap: 16px;
+    padding: 24px;
+  }
+
+  .extra-text {
+    min-width: 0;
+  }
+
+  .extra-title {
+    display: grid;
+    gap: 2px;
+    font-size: 1.125rem;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.02em;
+  }
+
+  .extra-role {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  .extra-sub {
+    margin-top: 6px;
+    font-size: 0.9375rem;
+    color: var(--label-2);
+  }
+
+  .extra-points {
+    display: grid;
+    gap: 8px;
+    margin-top: 14px;
+    list-style: none;
+  }
+
+  .extra-points li {
+    position: relative;
+    padding-left: 16px;
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    color: var(--label-2);
+  }
+
+  .extra-points li::before {
+    content: '';
+    position: absolute;
+    left: 2px;
+    top: 0.62em;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--label-3);
+  }
+
+  .extra-points :global(strong) {
+    color: var(--label);
+  }
+
+  .extra-points :global(a) {
+    color: var(--accent);
+    overflow-wrap: anywhere;
+  }
+
+  .extra-points :global(a:hover) {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  @media (max-width: 899px) {
+    .extras {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (max-width: 760px) {
+    .timeline,
+    .extras {
+      padding-left: 26px;
+    }
+
+    .timeline::before {
+      left: 5px;
+    }
+
+    .job-dot {
+      left: -27px;
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .extras {
+      padding-left: 0;
+    }
+
+    .extra {
+      flex-direction: column;
+    }
+  }
+</style>

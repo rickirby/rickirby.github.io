@@ -1,0 +1,353 @@
+---
+/**
+ * A portfolio entry. Entries with a description expand and collapse like the
+ * original `item-details` blocks:
+ *  - variant "card": App Store-style project card (personal projects); the first image is the card art
+ *  - variant "row":  a row inside a group card (company projects)
+ * Entries without a description render as a plain bullet.
+ */
+import { Image } from 'astro:assets';
+import Icon from './Icon.astro';
+import Gallery from './Gallery.astro';
+import { inline } from '../lib/inline';
+import { portfolioImage } from '../lib/images';
+import type { Block, Item } from '../data/portfolio';
+
+interface Props {
+  item: Item;
+  variant?: 'card' | 'row';
+  tint?: string;
+  featured?: boolean;
+}
+
+const { item, variant = 'row', tint = 'blue', featured = false } = Astro.props;
+const body = item.body ?? [];
+
+// Card art: the first image (or the first slide of a gallery). A single image used as art
+// is not repeated in the expanded text; galleries stay so every slide is still there.
+const artIndex = variant === 'card' ? body.findIndex((b) => 'img' in b || 'gallery' in b) : -1;
+const artBlock = artIndex >= 0 ? body[artIndex] : undefined;
+const art = artBlock ? ('img' in artBlock ? artBlock.img : 'gallery' in artBlock ? artBlock.gallery[0] : undefined) : undefined;
+const artAlt = artBlock && ('img' in artBlock || 'gallery' in artBlock) ? artBlock.alt : '';
+const content: Block[] = artBlock && 'img' in artBlock ? body.filter((_, i) => i !== artIndex) : body;
+---
+
+{
+  body.length === 0 ? (
+    <li class="bullet" set:html={inline(item.title)} />
+  ) : (
+    <li class:list={[variant === 'card' ? 'pcard-wrap reveal' : 'row', { featured }]}>
+      <details class:list={[variant === 'card' ? `pcard card tint-${tint}` : 'row-details']}>
+        {variant === 'card' ? (
+          <summary class="pcard-summary">
+            {art && (
+              <span class="project-media">
+                <Image
+                  src={portfolioImage(art)}
+                  alt={artAlt}
+                  widths={[480, 720, 1100]}
+                  sizes={featured ? '(max-width: 999px) 100vw, 760px' : '(max-width: 600px) 100vw, (max-width: 999px) 50vw, 380px'}
+                />
+              </span>
+            )}
+            <span class="project-body">
+              <span class="project-title" set:html={inline(item.title)} />
+              <span class="get-btn" aria-hidden="true">
+                <Icon name="chevron-down" size={18} strokeWidth={2.5} />
+              </span>
+            </span>
+          </summary>
+        ) : (
+          <summary class="row-summary">
+            <span class="row-title" set:html={inline(item.title)} />
+            <span class="row-chevron" aria-hidden="true">
+              <Icon name="chevron-down" size={18} strokeWidth={2.4} />
+            </span>
+          </summary>
+        )}
+        <div class="item-body">
+          {content.map((block) =>
+            'p' in block ? (
+              <p set:html={inline(block.p)} />
+            ) : 'img' in block ? (
+              <figure style={block.width ? `max-width: ${block.width}px` : undefined}>
+                <Image
+                  class="frame"
+                  src={portfolioImage(block.img)}
+                  alt={block.alt}
+                  widths={[480, 720, 960, 1280]}
+                  sizes={`(min-width: 1000px) ${block.width ?? 760}px, calc(100vw - 80px)`}
+                />
+              </figure>
+            ) : (
+              <Gallery images={block.gallery.map(portfolioImage)} alt={block.alt} />
+            ),
+          )}
+          {item.details && (
+            <p class="item-cta">
+              <a
+                class="btn btn-primary btn-sm"
+                href={item.details.href}
+                {...(item.details.external ? { target: '_blank', rel: 'noopener' } : {})}
+              >
+                See Details
+                <Icon name={item.details.external ? 'arrow-up-right' : 'arrow-right'} />
+              </a>
+            </p>
+          )}
+        </div>
+      </details>
+    </li>
+  )
+}
+
+<style>
+  summary {
+    list-style: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  summary::-webkit-details-marker {
+    display: none;
+  }
+
+  /* Smooth open/close where supported. */
+  details::details-content {
+    block-size: 0;
+    overflow-y: clip;
+    transition:
+      block-size 0.45s var(--ease),
+      content-visibility 0.45s allow-discrete;
+  }
+
+  details[open]::details-content {
+    block-size: auto;
+  }
+
+  .item-body {
+    display: grid;
+    gap: 14px;
+    font-size: 1rem;
+    line-height: 1.65;
+    color: var(--label-2);
+  }
+
+  .item-body :global(strong) {
+    color: var(--label);
+  }
+
+  .item-body :global(a:not(.btn)) {
+    color: var(--accent);
+  }
+
+  .item-body :global(a:not(.btn):hover) {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  figure {
+    margin: 4px 0;
+  }
+
+  .item-cta {
+    margin-top: 4px;
+  }
+
+  /* ---------- App Store-style project card ---------- */
+  .pcard {
+    display: block;
+    height: 100%;
+    overflow: hidden;
+    transition:
+      transform 0.4s var(--spring),
+      box-shadow 0.3s var(--ease);
+  }
+
+  .pcard:not([open]):hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .pcard-summary {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .pcard[open] .pcard-summary {
+    height: auto;
+  }
+
+  .project-media {
+    display: grid;
+    grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+    place-items: center;
+    aspect-ratio: 16 / 10;
+    padding: 18px;
+    background:
+      radial-gradient(80% 80% at 50% 0%, color-mix(in srgb, var(--tint) 22%, transparent), transparent),
+      color-mix(in srgb, var(--tint) 8%, var(--bg-inset));
+    overflow: hidden;
+  }
+
+  .featured .project-media {
+    flex: 1;
+    aspect-ratio: auto;
+    min-height: 320px;
+    padding: clamp(20px, 4vw, 48px);
+  }
+
+  .pcard[open] .project-media {
+    flex: none;
+    aspect-ratio: auto;
+    height: clamp(220px, 34vw, 380px);
+    min-height: 0;
+  }
+
+  .project-media :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 12px;
+    filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.18));
+    transition: transform 0.6s var(--ease);
+  }
+
+  .pcard:not([open]):hover .project-media :global(img) {
+    transform: scale(1.03);
+  }
+
+  .project-body {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 20px 20px 22px;
+  }
+
+  .project-title {
+    flex: 1;
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.025em;
+  }
+
+  .featured .project-title {
+    font-size: clamp(1.375rem, 2.4vw, 1.75rem);
+  }
+
+  .project-title :global(strong) {
+    font-weight: 800;
+    color: var(--tint);
+  }
+
+  /* App Store "GET"-style pill */
+  .get-btn {
+    flex: none;
+    display: inline-grid;
+    place-items: center;
+    width: 56px;
+    height: 30px;
+    border-radius: 999px;
+    background: var(--fill);
+    color: var(--accent);
+    transition:
+      background-color 0.2s var(--ease),
+      color 0.2s var(--ease);
+  }
+
+  .get-btn :global(svg) {
+    transition: transform 0.4s var(--spring);
+  }
+
+  .pcard:hover .get-btn {
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+
+  .pcard[open] .get-btn :global(svg) {
+    transform: rotate(180deg);
+  }
+
+  .pcard .item-body {
+    padding: 0 22px 24px;
+    max-width: 840px;
+  }
+
+  /* ---------- Row inside a group card ---------- */
+  .row + .row {
+    border-top: 1px solid var(--separator);
+  }
+
+  .row-summary {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 0;
+  }
+
+  .row-title {
+    flex: 1;
+    font-size: 1.0625rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    line-height: 1.4;
+    transition: color 0.2s var(--ease);
+  }
+
+  .row-summary:hover .row-title {
+    color: var(--accent);
+  }
+
+  .row-chevron {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--fill);
+    color: var(--label-2);
+    transition:
+      transform 0.4s var(--spring),
+      background-color 0.2s var(--ease),
+      color 0.2s var(--ease);
+  }
+
+  .row-summary:hover .row-chevron {
+    background: var(--fill-strong);
+    color: var(--label);
+  }
+
+  .row-details[open] .row-chevron {
+    transform: rotate(180deg);
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+
+  .row .item-body {
+    padding: 0 0 22px;
+  }
+
+  /* ---------- Title-only entries ---------- */
+  .bullet {
+    position: relative;
+    padding-left: 16px;
+    font-size: 0.9375rem;
+    line-height: 1.45;
+    color: var(--label-2);
+  }
+
+  .bullet::before {
+    content: '';
+    position: absolute;
+    left: 2px;
+    top: 0.6em;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--label-3);
+  }
+</style>

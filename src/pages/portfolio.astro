@@ -1,0 +1,314 @@
+---
+import { Image } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import PortfolioItem from '../components/PortfolioItem.astro';
+import { intro, personal, company, type Group } from '../data/portfolio';
+import { companyImage } from '../lib/images';
+import { inline, slugify } from '../lib/inline';
+import { seo } from '../site';
+import { breadcrumbs, graph, page } from '../lib/seo';
+
+const groupId = (prefix: string, g: Group) => `${prefix}-${slugify(g.title)}`;
+const projectTints = ['purple', 'blue', 'red', 'orange', 'teal', 'green'];
+const groupTints = ['teal', 'blue', 'green', 'pink', 'indigo', 'orange', 'purple', 'yellow'];
+const isExpandable = (g: Group) => g.items.some((item) => item.body?.length);
+---
+
+<Base
+  title={intro.title}
+  current="portfolio"
+  description={seo.portfolio.description}
+  jsonLd={graph(
+    page({ type: 'CollectionPage', path: '/portfolio', name: `${intro.title} | Ricki Bin Yamin`, description: seo.portfolio.description }),
+    breadcrumbs([
+      { name: 'Home', path: '/' },
+      { name: intro.title, path: '/portfolio' },
+    ]),
+  )}
+>
+  <header class="page-hero">
+    <div class="container intro-split">
+      <h1 class="page-title reveal">{intro.title}</h1>
+      <p class="page-lead reveal" style="--delay:60ms" set:html={inline(intro.lede)} />
+      <aside class="tip-card card intro-side reveal" style="--delay:120ms">
+        <span class="app-icon tint-yellow"><Icon name="lightbulb" /></span>
+        <div>
+          <p class="tip-title">Tip</p>
+          <p class="tip-body" set:html={inline(intro.tip)} />
+        </div>
+      </aside>
+    </div>
+  </header>
+
+  <!-- Personal Projects -->
+  <section class="section personal" aria-labelledby="personal-projects">
+    <div class="container">
+      <header class="section-head head-split reveal">
+        <h2 class="section-title" id="personal-projects">{personal.title}</h2>
+        <p class="section-subtitle">{personal.lede}</p>
+      </header>
+
+      {
+        personal.groups.map((g) => (
+          <div class="group">
+            <h3 id={groupId('personal', g)} class="group-label reveal">
+              <span class="app-icon tint-indigo group-emoji" aria-hidden="true">
+                {g.emoji}
+              </span>
+              {g.title}
+            </h3>
+            <ul class="project-grid">
+              {g.items.map((item, i) => (
+                <PortfolioItem item={item} variant="card" tint={projectTints[i % projectTints.length]} featured={i === 0} />
+              ))}
+            </ul>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- Company Projects -->
+  <section class="section company" aria-labelledby="company-projects">
+    <div class="container">
+      <header class="section-head head-split reveal">
+        <h2 class="section-title" id="company-projects">{company.title}</h2>
+        <p class="section-subtitle">{company.lede}</p>
+      </header>
+
+      <div class="filter-bar reveal">
+        <div class="segmented-lg" role="radiogroup" aria-label="Show company" data-filter-group>
+          <button type="button" role="radio" aria-checked="true" data-filter="all">All</button>
+          {
+            company.companies.map((c) => (
+              <button type="button" role="radio" aria-checked="false" data-filter={slugify(c.name)}>
+                {c.name}
+              </button>
+            ))
+          }
+        </div>
+      </div>
+
+      {
+        company.companies.map((c) => {
+          const id = slugify(c.name);
+          const light = companyImage(c.logo.light);
+          const dark = c.logo.dark ? companyImage(c.logo.dark) : undefined;
+          // Same rendered widths as the original page (e.g. Stockbit 137.39px).
+          const width = Math.round(c.logo.width);
+          const height = Math.round((light.height / light.width) * width);
+          const expandable = c.groups.filter(isExpandable);
+          const compact = c.groups.filter((g) => !isExpandable(g));
+          return (
+            <div class="company-block" data-company={id}>
+              <h3 id={id} class="company-name reveal">
+                <span class="visually-hidden">{c.name}</span>
+                <Image
+                  class:list={['company-logo', dark && 'light-only']}
+                  src={light}
+                  alt=""
+                  width={width}
+                  height={height}
+                  layout="fixed"
+                />
+                {dark && (
+                  <Image class="company-logo dark-only" src={dark} alt="" width={width} height={height} layout="fixed" />
+                )}
+              </h3>
+
+              {expandable.map((g) => (
+                <article class={`group-card card reveal tint-${groupTints[c.groups.indexOf(g) % groupTints.length]}`}>
+                  <h4 id={groupId(id, g)} class="group-head">
+                    <span class="app-icon group-emoji" aria-hidden="true">
+                      {g.emoji}
+                    </span>
+                    {g.title}
+                  </h4>
+                  <ul class="rows">
+                    {g.items.map((item) => (
+                      <PortfolioItem item={item} variant="row" />
+                    ))}
+                  </ul>
+                </article>
+              ))}
+
+              {compact.length > 0 && (
+                <div class="also card reveal">
+                  <div class="also-grid">
+                    {compact.map((g) => (
+                      <div class={`also-group tint-${groupTints[c.groups.indexOf(g) % groupTints.length]}`}>
+                        <h4 id={groupId(id, g)} class="also-group-title">
+                          <span class="app-icon group-emoji small" aria-hidden="true">
+                            {g.emoji}
+                          </span>
+                          {g.title}
+                        </h4>
+                        <ul>
+                          {g.items.map((item) => (
+                            <PortfolioItem item={item} />
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })
+      }
+    </div>
+  </section>
+</Base>
+
+<style>
+  .personal {
+    padding-top: clamp(40px, 6vw, 72px);
+  }
+
+  .company {
+    background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--bg-inset) 60%, transparent) 30%, transparent);
+  }
+
+  .group-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+    font-size: 1.125rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  /* Emoji inside an app-icon tile */
+  .group-emoji {
+    --size: 36px;
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .group-emoji.small {
+    --size: 30px;
+    font-size: 15px;
+  }
+
+  /* ---------- Personal project grid ---------- */
+  .project-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-auto-flow: dense;
+    align-items: start;
+    gap: 16px;
+    list-style: none;
+  }
+
+  .project-grid > :global(li.featured) {
+    grid-column: span 2;
+    grid-row: span 2;
+    align-self: stretch;
+  }
+
+  /* An opened card takes the whole row so its description has room. */
+  .project-grid > :global(li:has(details[open])) {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+
+  @media (max-width: 999px) {
+    .project-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .project-grid > :global(li.featured) {
+      grid-row: auto;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .project-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .project-grid > :global(li.featured) {
+      grid-column: span 1;
+    }
+
+    .project-grid :global(.featured .project-media) {
+      min-height: 0;
+      aspect-ratio: 16 / 10;
+    }
+  }
+
+  /* ---------- Company projects ---------- */
+  .filter-bar {
+    display: flex;
+    margin-bottom: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .company-block {
+    display: grid;
+    gap: 16px;
+    padding-top: 40px;
+  }
+
+  .company-block[hidden] {
+    display: none;
+  }
+
+  .company-name {
+    display: flex;
+    align-items: center;
+    margin: 0 0 -4px -6px;
+  }
+
+  .company-name :global(.company-logo) {
+    max-width: none;
+  }
+
+  .group-card {
+    padding: clamp(20px, 3vw, 28px) clamp(20px, 3vw, 32px) 8px;
+  }
+
+  .group-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 8px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .rows {
+    list-style: none;
+  }
+
+  .also {
+    padding: clamp(24px, 3vw, 32px);
+  }
+
+  .also-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 28px 24px;
+  }
+
+  .also-group-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .also-group ul {
+    display: grid;
+    gap: 8px;
+    margin-top: 12px;
+    list-style: none;
+  }
+</style>

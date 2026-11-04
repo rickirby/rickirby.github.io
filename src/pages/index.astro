@@ -1,0 +1,343 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import LockScreen from '../components/LockScreen.astro';
+import { seo, site } from '../site';
+import { graph, page } from '../lib/seo';
+
+// Word-for-word from the original home page (src/index.md).
+const features = [
+  { title: 'Portfolio', details: 'See my recent work as iOS Engineer!', link: '/portfolio', icon: 'briefcase', tint: 'blue' },
+  {
+    title: 'Resume',
+    details: 'See my completed list of resume in one page!',
+    link: '/resume',
+    icon: 'file-text',
+    tint: 'orange',
+  },
+  {
+    title: 'LinkedIn | rickirby18',
+    details: 'Connect with me on LinkedIn!',
+    link: site.linkedin,
+    icon: 'linkedin',
+    tint: 'indigo',
+  },
+  {
+    title: 'GitHub | rickirby',
+    details: 'Check out my GitHub repository!',
+    link: site.github,
+    icon: 'github',
+    tint: 'purple',
+  },
+];
+
+const ext = { target: '_blank', rel: 'noopener' };
+const tagline = site.tagline.split(' | ');
+---
+
+<Base
+  current="home"
+  fullTitle={seo.home.title}
+  description={seo.home.description}
+  type="profile"
+  jsonLd={graph(page({ type: 'ProfilePage', path: '/', name: seo.home.title, description: seo.home.description }))}
+>
+  <section class="hero" id="top">
+    <div class="hero-bg" aria-hidden="true"></div>
+    <div class="container hero-grid">
+      <div class="hero-copy">
+        <h1 class="hero-heading reveal">
+          <span class="hero-name text-gradient">{site.name}</span>
+          <span class="hero-role">{site.role}</span>
+        </h1>
+
+        <p class="hero-tagline reveal" style="--delay:60ms">
+          {
+            tagline.map((item, i) => (
+              <>
+                {i > 0 && (
+                  <span class="sep" aria-hidden="true">
+                    |
+                  </span>
+                )}
+                <span>{item}</span>
+              </>
+            ))
+          }
+        </p>
+
+        <div class="hero-ctas reveal" style="--delay:120ms">
+          <a class="btn btn-primary" href="/portfolio">
+            Explore More
+            <Icon name="arrow-right" />
+          </a>
+        </div>
+
+        <div class="hero-welcome reveal" style="--delay:180ms">
+          <h2 class="hero-hello">Hello and welcome! 👋</h2>
+          <p>
+            I’m Ricki Bin Yamin, an iOS Engineer dedicated in crafting exceptional mobile experiences. On this site, you’ll get a
+            glimpse of my journey, from innovative projects to detailed insights into my skills and background.
+          </p>
+          <p>
+            Browse through my <a href="/portfolio">portfolio</a> to see what I’ve been working on lately, and check out my <a
+              href="/resume">resume</a
+            > for a comprehensive view of my career. Don't forget to connect with me on <a href={site.linkedin} {...ext}
+              >LinkedIn</a
+            > and explore my <a href={site.github} {...ext}>GitHub</a> repository to see my code in action. Let’s build something
+            great together!
+          </p>
+        </div>
+      </div>
+
+      <div class="hero-device">
+        <LockScreen />
+      </div>
+    </div>
+  </section>
+
+  <section class="links" aria-label="Quick links">
+    <ul class="container link-grid">
+      {
+        features.map((f, i) => {
+          const external = f.link.startsWith('http');
+          const [name, handle] = f.title.split(' | ');
+          return (
+            <li class="reveal" style={`--delay:${i * 60}ms`}>
+              <a class={`link-card card tint-${f.tint}`} href={f.link} {...(external ? ext : {})}>
+                <div class="lc-top">
+                  <span class="app-icon">
+                    <Icon name={f.icon} />
+                  </span>
+                  <Icon name={external ? 'arrow-up-right' : 'arrow-right'} class="lc-arrow" />
+                </div>
+                <h3 class="lc-title">
+                  {name}
+                  {handle && (
+                    <span class="lc-handle">
+                      <span aria-hidden="true">|</span> {handle}
+                    </span>
+                  )}
+                </h3>
+                <p class="lc-details">{f.details}</p>
+              </a>
+            </li>
+          );
+        })
+      }
+    </ul>
+  </section>
+</Base>
+
+<style>
+  /* ---------- Hero (same as the portfolio site) ---------- */
+  .hero {
+    position: relative;
+    overflow: clip;
+    margin-top: calc(-1 * (var(--nav-h) + 12px));
+    padding-top: calc(var(--nav-h) + 12px + clamp(32px, 6vw, 72px));
+    padding-bottom: clamp(40px, 6vw, 72px);
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      radial-gradient(60% 50% at 85% 20%, color-mix(in srgb, var(--indigo) 16%, transparent), transparent 70%),
+      radial-gradient(50% 40% at 10% 0%, color-mix(in srgb, var(--blue) 14%, transparent), transparent 70%);
+  }
+
+  .hero-bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(color-mix(in srgb, var(--label) 12%, transparent) 1px, transparent 1px);
+    background-size: 22px 22px;
+    mask-image: radial-gradient(70% 60% at 50% 30%, #000, transparent 75%);
+    -webkit-mask-image: radial-gradient(70% 60% at 50% 30%, #000, transparent 75%);
+    opacity: 0.5;
+  }
+
+  .hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
+    align-items: center;
+    gap: clamp(32px, 5vw, 72px);
+  }
+
+  .hero-heading {
+    display: grid;
+    gap: 6px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1.04;
+  }
+
+  .hero-name {
+    justify-self: start;
+    font-size: clamp(2.75rem, 6.2vw, 5rem);
+    padding-bottom: 0.06em;
+  }
+
+  .hero-role {
+    font-size: clamp(2.1rem, 4.8vw, 3.75rem);
+    color: var(--label);
+  }
+
+  .hero-tagline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 14px;
+    margin-top: 20px;
+    font-family: var(--font-display);
+    font-size: clamp(1.25rem, 2.2vw, 1.75rem);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--label-2);
+  }
+
+  .sep {
+    font-weight: 300;
+    color: var(--label-3);
+  }
+
+  .hero-ctas {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-top: 32px;
+  }
+
+  .hero-welcome {
+    display: grid;
+    gap: 12px;
+    max-width: 640px;
+    margin-top: 36px;
+    padding-top: 28px;
+    border-top: 1px solid var(--separator);
+    font-size: 1.0625rem;
+    line-height: 1.65;
+    color: var(--label-2);
+  }
+
+  .hero-hello {
+    font-size: 1.375rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--label);
+  }
+
+  .hero-welcome a {
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  .hero-welcome a:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .hero-device {
+    justify-self: center;
+  }
+
+  @media (max-width: 899px) {
+    .hero-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .hero-device {
+      order: 2;
+    }
+  }
+
+  /* ---------- Quick links (the original "features"), styled like the work cards ---------- */
+  .links {
+    padding-bottom: clamp(72px, 10vw, 120px);
+  }
+
+  .link-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    list-style: none;
+  }
+
+  .link-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 22px;
+    transition:
+      transform 0.4s var(--spring),
+      box-shadow 0.3s var(--ease),
+      border-color 0.3s var(--ease);
+  }
+
+  .link-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow);
+    border-color: color-mix(in srgb, var(--tint) 35%, var(--card-border));
+  }
+
+  .link-card:active {
+    transform: scale(0.985);
+  }
+
+  .lc-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+
+  .lc-top :global(.lc-arrow) {
+    color: var(--label-3);
+    transition:
+      transform 0.3s var(--spring),
+      color 0.2s;
+  }
+
+  .link-card:hover :global(.lc-arrow) {
+    color: var(--tint);
+    transform: translate(2px, -2px);
+  }
+
+  .lc-title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 6px;
+    font-size: 1.1875rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+  }
+
+  .lc-handle {
+    font-weight: 500;
+    color: var(--label-2);
+  }
+
+  .lc-details {
+    margin-top: 6px;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    color: var(--label-2);
+  }
+
+  @media (max-width: 999px) {
+    .link-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 480px) {
+    .link-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>
